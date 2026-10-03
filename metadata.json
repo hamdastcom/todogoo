@@ -1,0 +1,6 @@
+{
+  "name": "FocusFlow ADHD",
+  "description": "Smart ADHD Todo & Executive Dysfunction Assistant powered by Metis AI",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
