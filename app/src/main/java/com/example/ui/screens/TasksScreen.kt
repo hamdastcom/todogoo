@@ -80,6 +80,7 @@ fun TasksScreen(
     breakdownTaskId: Long?,
     onNavigateToTimer: (Long?, String, Int) -> Unit,
     onNavigateToBrainDump: () -> Unit,
+    onOpenAnalytics: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
@@ -130,7 +131,9 @@ fun TasksScreen(
                     onEnergySelected = { viewModel.setTodayEnergy(it) },
                     bannerMessage = bannerMessage,
                     onDismissBanner = { viewModel.dismissDopamineBanner() },
-                    onOpenParalysisRescue = { showParalysisDialog = true }
+                    onOpenParalysisRescue = { showParalysisDialog = true },
+                    onOpenAnalytics = onOpenAnalytics,
+                    subtasks = subtasks
                 )
             }
 

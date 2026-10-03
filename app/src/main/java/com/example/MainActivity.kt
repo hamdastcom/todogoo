@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.screens.BodyDoubleScreen
 import com.example.ui.screens.BrainDumpScreen
 import com.example.ui.screens.ErrandsMapScreen
+import com.example.ui.screens.FocusAnalyticsScreen
 import com.example.ui.screens.FocusTimerScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.TasksScreen
@@ -65,12 +66,14 @@ class MainActivity : ComponentActivity() {
 fun MainApp(viewModel: MainViewModel = viewModel()) {
     var currentTab by remember { mutableStateOf(AppTab.TASKS) }
     var showTimerSheet by remember { mutableStateOf(false) }
+    var showAnalyticsSheet by remember { mutableStateOf(false) }
     var timerTaskId by remember { mutableStateOf<Long?>(null) }
     var timerTaskTitle by remember { mutableStateOf("تمرکز آزاد") }
     var timerMinutes by remember { mutableIntStateOf(25) }
 
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val subtasks by viewModel.subtasks.collectAsStateWithLifecycle()
+    val focusSessions by viewModel.focusSessions.collectAsStateWithLifecycle()
     val level by viewModel.userLevel.collectAsStateWithLifecycle()
     val xp by viewModel.userXp.collectAsStateWithLifecycle()
     val completedCount by viewModel.completedCount.collectAsStateWithLifecycle()
@@ -79,9 +82,11 @@ fun MainApp(viewModel: MainViewModel = viewModel()) {
     val breakdownTaskId by viewModel.breakdownTaskId.collectAsStateWithLifecycle()
 
     // Handle back button
-    BackHandler(enabled = showTimerSheet || currentTab != AppTab.TASKS) {
+    BackHandler(enabled = showTimerSheet || showAnalyticsSheet || currentTab != AppTab.TASKS) {
         if (showTimerSheet) {
             showTimerSheet = false
+        } else if (showAnalyticsSheet) {
+            showAnalyticsSheet = false
         } else {
             currentTab = AppTab.TASKS
         }
@@ -90,7 +95,7 @@ fun MainApp(viewModel: MainViewModel = viewModel()) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            if (!showTimerSheet) {
+            if (!showTimerSheet && !showAnalyticsSheet) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     tonalElevation = 2.dp,
@@ -163,6 +168,13 @@ fun MainApp(viewModel: MainViewModel = viewModel()) {
                 onClose = { showTimerSheet = false },
                 modifier = Modifier.padding(innerPadding)
             )
+        } else if (showAnalyticsSheet) {
+            FocusAnalyticsScreen(
+                focusSessions = focusSessions,
+                tasks = tasks,
+                onBack = { showAnalyticsSheet = false },
+                modifier = Modifier.padding(innerPadding)
+            )
         } else {
             when (currentTab) {
                 AppTab.TASKS -> {
@@ -184,6 +196,9 @@ fun MainApp(viewModel: MainViewModel = viewModel()) {
                         },
                         onNavigateToBrainDump = {
                             currentTab = AppTab.BRAIN_DUMP
+                        },
+                        onOpenAnalytics = {
+                            showAnalyticsSheet = true
                         },
                         modifier = Modifier.padding(innerPadding)
                     )

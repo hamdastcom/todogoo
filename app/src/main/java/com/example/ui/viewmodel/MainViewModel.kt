@@ -37,6 +37,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val taskRepo = TaskRepository(db.appDao(), prefsRepo)
     private val aiRepo = MetisAiRepository(prefsRepo)
     private val geminiRepo = GeminiRepository(prefsRepo)
+    private val metisBreakdownService = com.example.data.service.MetisTaskBreakdownService(aiRepo, taskRepo)
 
     val tasks: StateFlow<List<TaskEntity>> = taskRepo.allTasks
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -46,6 +47,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val completedCount: StateFlow<Int> = taskRepo.completedCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val focusSessions: StateFlow<List<FocusSessionEntity>> = taskRepo.focusSessions
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val totalFocusMinutes: StateFlow<Int?> = taskRepo.totalFocusMinutes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
@@ -161,8 +165,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 xpValue = (estimatedMinutes * 2).coerceIn(10, 80),
                 aiAdvice = aiAdvice
             )
-            taskRepo.addTask(task, subtasks)
-            showDopamineBanner("کار جدید اضافه شد! قدم‌های کوچک بردار 🌟")
+            val newTaskId = taskRepo.addTask(task, subtasks)
+            showDopamineBanner("کار جدید ثبت شد! قدم‌های کوچک بردار 🌟")
+
+            // Metis API Automatic Breakdown Service for complex tasks with no initial subtasks
+            if (subtasks.isEmpty() && metisBreakdownService.isComplexTask(title, description, estimatedMinutes)) {
+                _breakdownTaskId.value = newTaskId
+                val breakdownResult = metisBreakdownService.autoBreakdownTask(newTaskId, title, description)
+                _breakdownTaskId.value = null
+                if (breakdownResult.isSuccess) {
+                    val generated = breakdownResult.getOrNull() ?: emptyList()
+                    if (generated.isNotEmpty()) {
+                        showDopamineBanner("تسک «$title» با هوش مصنوعی متیس خودکار به ${generated.size} زیرکار عملی خرد شد! 🪄")
+                    }
+                }
+            }
         }
     }
 
